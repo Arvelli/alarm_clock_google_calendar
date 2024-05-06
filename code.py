@@ -18,13 +18,13 @@ import adafruit_datetime
 rtc_r = rtc.RTC()
 
 # Calendar ID
-CALENDAR_ID = "arvin.fazeli051214@gmail.com"
+CALENDAR_ID = "arvin.fazeli051214@gmail.com" #för att ange vilken kalender som ska visas
 
-# Maximum amount of events to display
-MAX_EVENTS = 5
 
-# Amount of time to wait between refreshing the calendar, in minutes
-REFRESH_TIME = 15
+MAX_EVENTS = 5 # Maximum amount of events to display
+
+
+REFRESH_TIME = 15 # Amount of time to wait between refreshing the calendar, in minutes
 
 MONTHS = {
     1: "Jan",
@@ -62,11 +62,11 @@ except ImportError:
     print("WiFi secrets are kept in secrets.py, please add them there!")
     raise
 
-# Create the PyPortal object
-pyportal = PyPortal()
 
-# Connect to the network
-pyportal.network.connect()
+pyportal = PyPortal() # Create the PyPortal object
+
+
+pyportal.network.connect() # Connect to the network
 
 # Initialize an OAuth2 object with GCal API scope
 scopes = ["https://www.googleapis.com/auth/calendar.readonly"]
@@ -80,20 +80,17 @@ google_auth = OAuth2(
 )
 
 # fetch calendar events!
-print("fetching local time...")
-pyportal.get_local_time(secrets["timezone"])
+print("fetching local time...") #print "fetching local time"
+pyportal.get_local_time(secrets["timezone"]) #hämtar tiden från internet 1 gång
 
 # Play a WAV file
 def play_alarm():
-    print("Playing WAV file...")
-    pyportal.play_file("Iphone Alarm Sound Effect.wav", wait_to_finish=False)
+    print("Playing WAV file...") #print "playing WAV file"
+    pyportal.play_file("Iphone Alarm Sound Effect.wav", wait_to_finish=False) #Spelar ljudfilen "Iphone Alarm Sound Effect.wav" på PyPortal med inställningen att inte vänta på att filen ska slutföras.
 
 def get_current_time(time_max=False):
     """Gets local time from the real-time clock and converts to  timestamp."""
-    # Get local time from the real-time clock
-
-    # Get local time from Adafruit IO
-    #pyportal.get_local_time(secrets["timezone"])
+ 
 
     cur_time = rtc_r.datetime
 
@@ -181,6 +178,27 @@ def get_wakeup_time(calendar_id, max_events, time_min):
         return wakeup_time
     else:
         return None  # Return None if no events found or if first_event_start_time is None
+
+
+def get_light_time(calendar_id, max_events, time_min):
+    """Calculates the time for turning on the light 90 minutes before the first event."""
+    first_event_start_time, _ = get_calendar_events(calendar_id, max_events, time_min)
+
+    if first_event_start_time:
+        # Given timestamp
+        timestamp = adafruit_datetime.datetime.fromisoformat(first_event_start_time)
+
+        # Create a timedelta object representing 90 minutes
+        delta = adafruit_datetime.timedelta(minutes=90)
+
+        # Subtract the timedelta from the timestamp
+        light_time = timestamp - delta
+        print("light_time:", light_time)
+
+        return light_time
+    else:
+        return None  # Return None if no events found or if first_event_start_time is None
+
 
 
 def format_datetime(datetime, pretty_date=False):
@@ -320,12 +338,16 @@ while True:
     # fetch calendar events!
     print("fetching local time...")
     now = get_current_time()
+    
 
     # setup header label
     pyportal.set_text(format_datetime(now, pretty_date=True), label_header)
 
     print("fetching calendar events...")
     events = get_calendar_events(CALENDAR_ID, MAX_EVENTS, now)
+    
+    # Calculate light time
+    light_time = get_light_time(CALENDAR_ID, MAX_EVENTS, now)
 
     print("displaying events")
     display_calendar_events(events)
@@ -345,4 +367,5 @@ while True:
 
     print("Sleeping for %d seconds" % 30)  # Sleep for 1 second
     time.sleep(30)
+
 
