@@ -1,9 +1,3 @@
-# SPDX-FileCopyrightText: 2021 Brent Rubell, written for Adafruit Industries
-#
-# SPDX-License-Identifier: Unlicense
-# SPDX-FileCopyrightText: 2021 Brent Rubell, written for Adafruit Industries
-#
-# SPDX-License-Identifier: Unlicense
 import time
 from adafruit_oauth2 import OAuth2
 from adafruit_display_shapes.line import Line
@@ -414,7 +408,6 @@ while True:
         pyportal.stop_playing()  # Stop the WAV playback
 
 
-    print("Sleeping for %d seconds" % 30)  # Sleep for 1 second
-    time.sleep(30)
+
 
 
