@@ -11,7 +11,27 @@ from adafruit_pyportal import PyPortal
 import rtc
 from adafruit_bitmap_font import bitmap_font
 import adafruit_datetime
+import neopixel
+import digitalio
+from adafruit_display_text import label
+import board
 
+
+# set neopixel min and max brightness
+BRIGHTNESS = 0
+MIN_BRIGHTNESS = 0
+MAX_BRIGHTNESS = 0.85
+# initialize neopixel strip
+num_pixels = 30
+ORDER = neopixel.RGBW
+strip = neopixel.NeoPixel(
+    board.D3, num_pixels, brightness=BRIGHTNESS, pixel_order=ORDER
+)
+strip.fill(0)  # start it set to off
+# color of strip
+WHITE = (255, 255, 255, 255)
+# number of minutes it takes for strip to fade from min to max
+light_minutes = 30
 
 
 # Set up the RTC
@@ -82,6 +102,13 @@ google_auth = OAuth2(
 # fetch calendar events!
 print("fetching local time...") #print "fetching local time"
 pyportal.get_local_time(secrets["timezone"]) #hämtar tiden från internet 1 gång
+
+
+# Configure the button connected to D4
+button_pin = digitalio.DigitalInOut(board.D4)
+button_pin.direction = digitalio.Direction.INPUT
+button_pin.pull = digitalio.Pull.UP
+
 
 # Play a WAV file
 def play_alarm():
@@ -356,13 +383,35 @@ while True:
     
     print("correct_clock", correct_clock)
     
-
+    
+    if  correct_clock == light_time:
+        print("Starting wake up light")
+        for i in range(light_minutes - 1):
+            BRIGHTNESS = BRIGHTNESS + (
+                MAX_BRIGHTNESS / light_minutes
+            )  # max 0.25, min 0.0
+            strip.fill(WHITE)
+            strip.brightness = BRIGHTNESS
+            current_time
+            time.sleep(60)  # 60 for once per min
+        while not pyportal.touchscreen.touch_point:  # turn strip off
+            current_time
+            time.sleep(1)
+            continue
+        strip.brightness = MIN_BRIGHTNESS
+    
+    
     # Check if the current time matches the wake-up time
     wakeup_time = get_wakeup_time(CALENDAR_ID, MAX_EVENTS, now)
 
     if wakeup_time is not None and correct_clock == wakeup_time:
         # Play the WAV file
         pyportal.play_file("alarm.wav", wait_to_finish=False)
+        
+    # Check for button press to stop the alarm
+    if not button_pin.value and pyportal.audio.playing:  # If button is pressed and alarm sound is playing
+        print("Stopping alarm")
+        pyportal.stop_playing()  # Stop the WAV playback
 
 
     print("Sleeping for %d seconds" % 30)  # Sleep for 1 second
